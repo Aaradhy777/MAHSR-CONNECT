@@ -1,6 +1,8 @@
 import streamlit as st
 import urllib.parse
 import random
+import os
+from google import genai
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -90,15 +92,8 @@ LANG = {
         "wayfinding_text": "Enter via **Gate 3 (Express Biometric Lane)** ➔ Take Escalator B down to **Concourse Level -1** ➔ Scan QR at **Turnstile 04** ➔ Proceed to **Platform 2 (Coach C1)**.",
         "new_booking": "Book Another Ticket 🔄",
         "ai_title": "🤖 MAHSR AI Travel Assistant",
-        "ai_welcome": "Hello! Ask me about train timings, ticket fares, baggage rules, or stations.",
-        "ai_placeholder": "Ask a question (e.g., 'luggage limit', 'stations', 'fare')...",
-        "ai_responses": {
-            "fare": "Standard Class is ₹3,000 and Business Class is ₹5,500 for the Mumbai–Ahmedabad route.",
-            "station": "Key stations include Mumbai (BKC), Thane, Virar, Boisar, Vapi, Bilimora, Surat, Bharuch, Vadodara, Anand, Ahmedabad, and Sabarmati.",
-            "luggage": "Passengers can carry 1 check-in bag (up to 20 kg) and 1 cabin bag (up to 7 kg) free of charge.",
-            "time": "The high-speed bullet train covers 508 km in approximately 2 hours and 07 minutes at speeds up to 320 km/h.",
-            "default": "I can help with MAHSR fares, stations, travel time, and baggage limits. Try asking about 'stations' or 'luggage'!"
-        }
+        "ai_welcome": "Hello! I am your live Gemini AI assistant. Ask me anything about train timings, fares, or your trip.",
+        "ai_placeholder": "Ask a question about your trip..."
     },
     "हिंदी (Hindi)": {
         "title": "MAHSR कनेक्ट — हाई-स्पीड रेल पोर्टल",
@@ -139,15 +134,8 @@ LANG = {
         "wayfinding_text": "**गेट 3 (एक्सप्रेस लेन)** से प्रवेश करें ➔ एस्केलेटर B से **कॉनकोर्स लेवल -1** पर जाएं ➔ **टर्नस्टाइल 04** पर QR स्कैन करें ➔ **प्लेटफ़ॉर्म 2 (कोच C1)** पर जाएं।",
         "new_booking": "दूसरा टिकट बुक करें 🔄",
         "ai_title": "🤖 MAHSR AI यात्रा सहायक",
-        "ai_welcome": "नमस्ते! मुझसे ट्रेन के समय, किराए, सामान के नियमों या स्टेशनों के बारे में पूछें।",
-        "ai_placeholder": "अपना प्रश्न लिखें (जैसे: 'किराया', 'स्टेशन', 'सामान')...",
-        "ai_responses": {
-            "fare": "मुंबई-अहमदाबाद मार्ग के लिए स्टैंडर्ड क्लास का किराया ₹3,000 और बिज़नेस क्लास का ₹5,500 है।",
-            "station": "प्रमुख स्टेशनों में मुंबई (BKC), ठाणे, विरार, बोइसर, वापी, सूरत, वडोदरा और अहमदाबाद शामिल हैं।",
-            "luggage": "यात्री निःशुल्क 1 चेक-इन बैग (20 किग्रा तक) और 1 केबिन बैग (7 किग्रा तक) ले जा सकते हैं।",
-            "time": "बुलेट ट्रेन 320 किमी/घंटा की गति से लगभग 2 घंटे 07 मिनट में 508 किमी की दूरी तय करती है।",
-            "default": "मैं किराया, स्टेशन, यात्रा समय और सामान की सीमा में मदद कर सकता हूँ। कृपया इनमें से कुछ पूछें!"
-        }
+        "ai_welcome": "नमस्ते! मैं आपका लाइव जेमिनी AI सहायक हूँ। ट्रेन के समय, किराए या यात्रा के बारे में कुछ भी पूछें।",
+        "ai_placeholder": "अपनी यात्रा के बारे में पूछें..."
     },
     "मराठी (Marathi)": {
         "title": "MAHSR कनेक्ट — हाय-स्पीड रेल पोर्टल",
@@ -186,17 +174,10 @@ LANG = {
         "seat": "कोच आणि सीट",
         "wayfinding_title": "🧭 लाइव्ह टर्मिनल वेफाइंडिंग गाईड",
         "wayfinding_text": "**गेट 3 (एक्स्प्रेस लेन)** मधून प्रवेश करा ➔ एस्कलेटर B ने **कॉनकोर्स लेव्हल -1** वर जा ➔ **टर्नस्टाइल 04** वर QR स्कॅन करा ➔ **प्लॅटफॉर्म 2 (कोच C1)** वर जा.",
-        "new_booking": "दुसरे तिकीट बुक करा 🔄",
+        "new_booking": "दुसरे तिकीट बुक करें 🔄",
         "ai_title": "🤖 MAHSR AI प्रवास सहाय्यक",
-        "ai_welcome": "नमस्कार! मला ट्रेनच्या वेळा, तिकीट दर, सामानाचे नियम किंवा स्थानकांबद्दल विचारा.",
-        "ai_placeholder": "तुमचा प्रश्न विचारा (उदा. 'तिकीट दर', 'स्थानके', 'सामान')...",
-        "ai_responses": {
-            "fare": "मुंबई-अहमदाबाद मार्गासाठी स्टँडर्ड क्लासचे भाडे ₹3,000 आणि बिझनेस क्लासचे ₹5,500 आहे.",
-            "station": "मुख्य स्थानकांमध्ये मुंबई (BKC), ठाणे, विरार, बोईसर, वापी, सुरत, वडोदरा आणि अहमदाबाद यांचा समावेश आहे.",
-            "luggage": "प्रवासी विनामूल्य 1 चेक-इन बॅग (20 किलोपर्यंत) आणि 1 केबिन बॅग (7 किलोपर्यंत) नेऊ शकतात.",
-            "time": "बुलेट ट्रेन 320 किमी/तास वेगाने सुमारे 2 तास 07 मिनिटांत 508 किमी अंतर कापते.",
-            "default": "मी तिकीट दर, स्थानके, प्रवासाची वेळ आणि सामानाच्या मर्यादेबद्दल मदत करू शकतो!"
-        }
+        "ai_welcome": "नमस्कार! मी तुमचा लाइव्ह जेमिनी AI सहाय्यक आहे. ट्रेनच्या वेळा, भाडे किंवा प्रवासाविषयी काहीही विचार.",
+        "ai_placeholder": "तुमच्या प्रवासाबद्दल प्रश्न विचार..."
     },
     "ગુજરાતી (Gujarati)": {
         "title": "MAHSR કનેક્ટ — હાઈ-સ્પીડ રેલ પોર્ટલ",
@@ -237,15 +218,8 @@ LANG = {
         "wayfinding_text": "**ગેટ 3 (એક્સપ્રેસ લેન)** થી પ્રવેશ કરો ➔ એસ્કેલેટર B દ્વારા **કોનકોર્સ લેવલ -1** પર જાઓ ➔ **ટર્નસ્ટાઇલ 04** પર QR સ્કેન કરો ➔ **પ્લેટફોર્મ 2 (કોચ C1)** પર જાઓ.",
         "new_booking": "બીજી ટિકિટ બુક કરો 🔄",
         "ai_title": "🤖 MAHSR AI ટ્રાવેલ આસિસ્ટન્ટ",
-        "ai_welcome": "નમસ્તે! મને ટ્રેનના સમય, ભાડા, સામાનના નિયમો અથવા સ્ટેશનો વિશે પૂછો.",
-        "ai_placeholder": "તમારો પ્રશ્ન લખો (દા.ત. 'ભાડું', 'સ્ટેશન', 'સામાન')...",
-        "ai_responses": {
-            "fare": "મુંબઈ-અમદાવાદ રૂટ માટે સ્ટાન્ડર્ડ ક્લાસનું ભાડું ₹3,000 અને બિઝનેસ ક્લાસનું ₹5,500 છે.",
-            "station": "મુખ્ય સ્ટેશનોમાં મુંબઈ (BKC), થાણે, વિરાર, બોઈસર, વાપી, સુરત, વડોદરા અને અમદાવાદનો સમાવેશ થાય છે.",
-            "luggage": "મુસાફરો વિનામૂલ્યે 1 ચેક-ઇન બેગ (20 કિગ્રા સુધી) અને 1 કેબિન બેગ (7 કિગ્રા સુધી) લઈ જઈ શકે છે.",
-            "time": "બુલેટ ટ્રેન 320 કિમી/કલાકની ઝડપે આશરે 2 કલાક અને 07 મિનિટમાં 508 કિમીનું અંતર કાપે છે.",
-            "default": "હું ભાડું, સ્ટેશન, મુસાફરીનો સમય અને સામાનની મર્યાદા વિશે મદદ કરી શકું છું!"
-        }
+        "ai_welcome": "નમસ્તે! હું તમારો લાઇવ જેમિની AI આસિસ્ટન્ટ છું. ટ્રેનના સમય, ભાડા અથવા તમારી સફર વિશે કંઈપણ પૂછો.",
+        "ai_placeholder": "તમારી મુસાફરી વિશે પૂછો..."
     }
 }
 
@@ -274,41 +248,54 @@ with col_lang:
 
 T = LANG[selected_lang]
 
-# --- SIDEBAR: AI TRAVEL ASSISTANT ---
+# --- SIDEBAR: LIVE GEMINI AI ASSISTANT ---
 with st.sidebar:
     st.markdown(f"### {T['ai_title']}")
     st.info(T["ai_welcome"])
 
-    # Display active session context to AI user
+    # Load API key safely from Streamlit Secrets or environment
+    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+
     if st.session_state.passenger_name:
         st.caption(f"👤 Active User: **{st.session_state.passenger_name}** ({st.session_state.passenger_phone})")
 
-    # Chat history container
     for sender, msg in st.session_state.chat_history:
-        if sender == "user":
-            st.markdown(f"**You:** {msg}")
-        else:
-            st.markdown(f"**AI:** {msg}")
+        with st.chat_message(sender):
+            st.markdown(msg)
 
-    user_q = st.text_input(T["ai_placeholder"], key="ai_input_box")
-    if st.button("Send / પૂછો", use_container_width=True) and user_q.strip():
-        q_lower = user_q.lower()
+    user_q = st.chat_input(T["ai_placeholder"])
+    if user_q:
         st.session_state.chat_history.append(("user", user_q))
-        
-        # Multilingual keyword matching
-        if any(w in q_lower for w in ["fare", "price", "cost", "ticket", "किराया", "दर", "ભાડું", "કિંમત"]):
-            reply = T["ai_responses"]["fare"]
-        elif any(w in q_lower for w in ["station", "stop", "route", "स्टेशन", "स्थानक", "સ્ટેશન"]):
-            reply = T["ai_responses"]["station"]
-        elif any(w in q_lower for w in ["luggage", "bag", "weight", "सामान", "बॅग", "સામાન", "બેગ"]):
-            reply = T["ai_responses"]["luggage"]
-        elif any(w in q_lower for w in ["time", "speed", "duration", "fast", "समय", "वेळ", "સમય", "ઝડપ"]):
-            reply = T["ai_responses"]["time"]
+        with st.chat_message("user"):
+            st.markdown(user_q)
+
+        if not api_key:
+            reply = "⚠️ Please add `GEMINI_API_KEY` in Streamlit Secrets to activate live AI."
         else:
-            reply = T["ai_responses"]["default"]
-            
-        st.session_state.chat_history.append(("ai", reply))
-        st.rerun()
+            try:
+                client = genai.Client(api_key=api_key)
+                
+                system_context = (
+                    f"You are the official MAHSR Connect AI Travel Assistant for the Mumbai–Ahmedabad High-Speed Rail (Bullet Train). "
+                    f"Reply strictly in {selected_lang}. Keep answers helpful, concise (2-3 sentences), and accurate. "
+                    f"Key facts: 508 km route, 12 stations (Mumbai BKC, Thane, Virar, Boisar, Vapi, Bilimora, Surat, Bharuch, Vadodara, Anand, Ahmedabad, Sabarmati), "
+                    f"max speed 320 km/h (~2h 07m travel time), Standard Class ₹3,000, Business Class ₹5,500, baggage limit 20kg check-in + 7kg cabin. "
+                    f"Current passenger: {st.session_state.passenger_name or 'Guest'}, "
+                    f"Route: {st.session_state.get('from_stn', 'Not selected')} to {st.session_state.get('to_stn', 'Not selected')}, "
+                    f"Seat: {st.session_state.selected_seat or 'Not selected'}."
+                )
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=f"{system_context}\n\nPassenger question: {user_q}"
+                )
+                reply = response.text
+            except Exception as e:
+                reply = f"⚠️ AI connection error: {e}"
+
+        st.session_state.chat_history.append(("assistant", reply))
+        with st.chat_message("assistant"):
+            st.markdown(reply)
 
 # --- MAIN HEADER ---
 st.markdown(f"""
@@ -318,7 +305,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- STARTING USER MANUAL (Expandable on Step 1 or anytime) ---
+# --- STARTING USER MANUAL ---
 with st.expander(T["manual_title"], expanded=(st.session_state.step == 1)):
     st.markdown('<div class="manual-box">', unsafe_allow_html=True)
     for step_text in T["manual_steps"]:
@@ -341,7 +328,6 @@ if st.session_state.step == 1:
         clean_name = name_input.strip()
         clean_phone = phone_input.strip()
         
-        # Strict validation: Both name and 10-digit numeric phone number must be filled
         if len(clean_name) > 0 and clean_phone.isdigit() and len(clean_phone) == 10:
             st.session_state.passenger_name = clean_name
             st.session_state.passenger_phone = clean_phone
@@ -413,7 +399,6 @@ elif st.session_state.step == 3:
     for r in rows:
         grid_cols = st.columns(len(cols) + 1)
         for idx, c in enumerate(cols):
-            # Add aisle gap
             col_pos = idx + 1 if (is_business and idx >= 2) or (not is_business and idx >= 3) else idx
             seat_id = f"{r}{c}"
             with grid_cols[col_pos]:
