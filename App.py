@@ -254,7 +254,7 @@ with st.sidebar:
     st.info(T["ai_welcome"])
 
     # Load Groq API key safely from Streamlit Secrets or environment
-    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", "gsk_...NRx3"))
+    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
 
     if st.session_state.passenger_name:
         st.caption(f"👤 Active User: **{st.session_state.passenger_name}** ({st.session_state.passenger_phone})")
