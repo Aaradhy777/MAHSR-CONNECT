@@ -2,7 +2,7 @@ import streamlit as st
 import urllib.parse
 import random
 import os
-from google import genai
+from groq import Groq
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -254,7 +254,7 @@ with st.sidebar:
     st.info(T["ai_welcome"])
 
     # Load API key safely from Streamlit Secrets or environment
-    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
 
     if st.session_state.passenger_name:
         st.caption(f"👤 Active User: **{st.session_state.passenger_name}** ({st.session_state.passenger_phone})")
@@ -273,7 +273,7 @@ with st.sidebar:
             reply = "⚠️ Please add `GEMINI_API_KEY` in Streamlit Secrets to activate live AI."
         else:
             try:
-                client = genai.Client(api_key=api_key)
+                client = Groq.Client(api_key=api_key)
                 
                 system_context = (
                     f"You are the official MAHSR Connect AI Travel Assistant for the Mumbai–Ahmedabad High-Speed Rail (Bullet Train). "
