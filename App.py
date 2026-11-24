@@ -248,12 +248,12 @@ with col_lang:
 
 T = LANG[selected_lang]
 
-# --- SIDEBAR: LIVE GEMINI AI ASSISTANT ---
+# --- SIDEBAR: LIVE GROQ AI ASSISTANT ---
 with st.sidebar:
     st.markdown(f"### {T['ai_title']}")
     st.info(T["ai_welcome"])
 
-    # Load API key safely from Streamlit Secrets or environment
+    # Load Groq API key safely from Streamlit Secrets or environment
     api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY", ""))
 
     if st.session_state.passenger_name:
@@ -270,10 +270,10 @@ with st.sidebar:
             st.markdown(user_q)
 
         if not api_key:
-            reply = "⚠️ Please add `GEMINI_API_KEY` in Streamlit Secrets to activate live AI."
+            reply = "⚠️ Please add `GROQ_API_KEY` in Streamlit Secrets to activate live AI."
         else:
             try:
-                client = Groq.Client(api_key=api_key)
+                client = Groq(api_key=api_key)
                 
                 system_context = (
                     f"You are the official MAHSR Connect AI Travel Assistant for the Mumbai–Ahmedabad High-Speed Rail (Bullet Train). "
@@ -285,11 +285,14 @@ with st.sidebar:
                     f"Seat: {st.session_state.selected_seat or 'Not selected'}."
                 )
 
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=f"{system_context}\n\nPassenger question: {user_q}"
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": system_context},
+                        {"role": "user", "content": user_q}
+                    ],
+                    model="openai/gpt-oss-120b",
                 )
-                reply = response.text
+                reply = chat_completion.choices[0].message.content
             except Exception as e:
                 reply = f"⚠️ AI connection error: {e}"
 
